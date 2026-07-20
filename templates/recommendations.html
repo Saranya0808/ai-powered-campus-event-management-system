@@ -1,0 +1,167 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Your Recommendations | Virinchi 2K26</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet">
+
+    <style>
+        .bg-purple { background-color: #4a148c !important; }
+        .text-purple { color: #4a148c !important; }
+        .btn-purple { background-color: #4a148c !important; color: white !important; }
+
+        .match-card {
+            border: 2px solid #7b1fa2;
+            border-radius: 12px;
+            transition: transform 0.2s;
+        }
+
+        .match-card:hover {
+            transform: translateY(-4px);
+        }
+
+        .tag-custom {
+            background-color: #f3e5f5;
+            color: #4a148c;
+            padding: 0.25rem 0.5rem;
+            border-radius: 6px;
+            font-size: 0.75rem;
+            font-weight: 500;
+            display: inline-block;
+            margin-right: 0.35rem;
+            margin-bottom: 0.35rem;
+        }
+    </style>
+</head>
+
+<body class="bg-light">
+
+<nav class="navbar navbar-expand-lg navbar-dark bg-purple shadow-sm">
+    <div class="container">
+        <a class="navbar-brand fw-bold" href="/">✨ Virinchi 2K26</a>
+
+        <div>
+            <a class="nav-link d-inline text-white mx-2" href="/">Home</a>
+            <a class="nav-link d-inline text-white mx-2" href="/events">Events</a>
+            <a class="nav-link d-inline text-white mx-2" href="/my-events">📅 My Schedule</a>
+            <a class="nav-link d-inline text-warning fw-bold mx-2" href="/recommendations">🧠 Recommendations</a>
+        </div>
+    </div>
+</nav>
+
+<div class="container my-5">
+
+    <div class="mb-4">
+        <h1 class="text-purple fw-bold">AI-Powered Event Recommendations</h1>
+
+        <p class="text-muted">
+            Recommendations generated using
+            <strong>TF-IDF Vectorization + Cosine Similarity</strong>
+            based on your skills:
+            <strong>{{ student_skills|join(', ') }}</strong>
+        </p>
+    </div>
+
+    <div id="recommendationsGrid" class="row g-4">
+        <div class="col-12 text-center py-5">
+            <div class="spinner-border text-primary"></div>
+            <p class="text-muted mt-2">Generating AI recommendations...</p>
+        </div>
+    </div>
+
+</div>
+
+<script>
+async function loadRecommendations() {
+    const grid = document.getElementById('recommendationsGrid');
+
+    try {
+        const response = await fetch('/api/student/recommendations');
+
+        if (response.status === 401) {
+            grid.innerHTML = `
+                <div class="col-12 text-center py-5">
+                    <p class="text-danger fw-bold">Please login to view recommendations.</p>
+                    <a href="/login" class="btn btn-warning fw-bold">Login</a>
+                </div>
+            `;
+            return;
+        }
+
+        if (!response.ok) {
+            throw new Error("Failed to load recommendations.");
+        }
+
+        const recommendations = await response.json();
+
+        if (recommendations.length === 0) {
+            grid.innerHTML = `
+                <div class="col-12 text-center py-5 text-muted">
+                    No recommendations available right now.
+                </div>
+            `;
+            return;
+        }
+
+        grid.innerHTML = recommendations.map(event => `
+            <div class="col-md-4">
+                <div class="card h-100 p-4 match-card bg-white shadow-sm">
+
+                    <div class="d-flex justify-content-between align-items-center mb-2">
+                        <span class="badge bg-purple">
+                            🤖 ${event.match_score}% AI Match
+                        </span>
+
+                        <span class="badge ${
+                            event.category === 'Technical'
+                            ? 'bg-warning text-dark'
+                            : 'bg-info text-white'
+                        }">
+                            ${event.category}
+                        </span>
+                    </div>
+
+                    <h4 class="fw-bold">${event.title}</h4>
+
+                    <p class="small text-muted">${event.description}</p>
+
+                    <p class="small mb-1">
+                        <strong>Sub-category:</strong> ${event.sub_category}
+                    </p>
+
+                    <p class="small mb-1">
+                        📍 <strong>Venue:</strong> ${event.venue}
+                    </p>
+
+                    <p class="small">
+                        📅 <strong>Date:</strong> ${event.date}
+                    </p>
+
+                    <div class="mb-3">
+                        ${(event.tags || '').split(',').map(tag => `
+                            <span class="tag-custom">${tag.trim()}</span>
+                        `).join('')}
+                    </div>
+
+                    <a href="/event/${event.event_id}" class="btn btn-outline-primary btn-sm mt-auto">
+                        View Details
+                    </a>
+                </div>
+            </div>
+        `).join('');
+
+    } catch (error) {
+        grid.innerHTML = `
+            <div class="col-12 text-center py-4 text-danger">
+                ⚠️ Error generating recommendations.<br>
+                <small>${error.message}</small>
+            </div>
+        `;
+    }
+}
+
+window.onload = loadRecommendations;
+</script>
+
+</body>
+</html>

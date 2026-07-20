@@ -1,0 +1,26 @@
+body{
+    background-color: #f4f4f4;
+    font-family: Arial, sans-serif;
+}
+
+.navbar{
+    padding: 15px;
+}
+
+.card{
+    transition: 0.3s;
+    border-radius: 10px;
+}
+
+.card:hover{
+    transform: scale(1.03);
+}
+
+.card img{
+    height: 200px;
+    object-fit: cover;
+}
+
+h1,h2,h3{
+    font-weight: bold;
+}
